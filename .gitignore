@@ -368,3 +368,8 @@ FodyWeavers.xsd
 *.sln.iml
 tmp/*
 .idea/*
+
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal
