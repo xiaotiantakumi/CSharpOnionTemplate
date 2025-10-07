@@ -15,17 +15,17 @@ A clean, modern .NET 8 template implementing Onion Architecture (Clean Architect
 ## Project Structure
 
 ```
-template.sln
+Template.sln
 ├── src/
-│   ├── template.Domain/             # Domain layer (Core business logic)
-│   ├── template.Application/        # Application layer (Use cases, CQRS)
-│   ├── template.Infrastructure/     # Infrastructure layer (Persistence, external services)
-│   └── template.Web/                # Presentation layer (API, DI composition root)
+│   ├── Template.Domain/             # Domain layer (Core business logic)
+│   ├── Template.Application/        # Application layer (Use cases, CQRS)
+│   ├── Template.Infrastructure/     # Infrastructure layer (Persistence, external services)
+│   └── Template.Web/                # Presentation layer (API, DI composition root)
 └── tests/
-    ├── template.Domain.UnitTests/
-    ├── template.Application.UnitTests/
-    ├── template.Infrastructure.IntegrationTests/
-    └── template.Web.FunctionalTests/
+    ├── Template.Domain.UnitTests/
+    ├── Template.Application.UnitTests/
+    ├── Template.Infrastructure.IntegrationTests/
+    └── Template.Web.FunctionalTests/
 ```
 
 ## Getting Started
@@ -120,6 +120,23 @@ Run all tests:
 ```bash
 dotnet test
 ```
+
+### Code Coverage
+
+Generate code coverage reports:
+
+```bash
+# Run tests with coverage collection
+./scripts/run_tests.sh
+
+# Generate HTML coverage report
+./scripts/generate_coverage_report.sh
+
+# Run tests and generate coverage report in one command
+./scripts/run_tests_with_coverage.sh
+```
+
+The coverage report will be generated in the `coverage-report/` directory. Open `coverage-report/index.html` in your browser to view the detailed coverage report.
 
 ## Dependencies
 
