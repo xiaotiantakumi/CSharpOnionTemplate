@@ -1,0 +1,102 @@
+---
+globs: *.cs
+description: CQRS and MediatR patterns
+---
+
+# CQRS and MediatR Rules
+
+This project uses CQRS (Command Query Responsibility Segregation) pattern and MediatR library.
+
+## Command and Query Separation
+
+### Commands
+- Operations that modify data
+- Implement `ICommand` interface
+- Return type is `void` or `Task`
+- Examples: `CreateUserCommand`, `UpdateUserCommand`, `DeleteUserCommand`
+
+### Queries
+- Operations that read data
+- Implement `IQuery<TResult>` interface
+- Return type is `TResult` or `Task<TResult>`
+- Examples: `GetUserByIdQuery`, `GetAllUsersQuery`
+
+## Handler Implementation
+
+### Command Handler
+```csharp
+public class CreateUserCommandHandler : ICommandHandler<CreateUserCommand>
+{
+    public async Task Handle(CreateUserCommand command, CancellationToken cancellationToken)
+    {
+        // Command processing logic
+    }
+}
+```
+
+### Query Handler
+```csharp
+public class GetUserByIdQueryHandler : IQueryHandler<GetUserByIdQuery, UserDto>
+{
+    public async Task<UserDto> Handle(GetUserByIdQuery query, CancellationToken cancellationToken)
+    {
+        // Query processing logic
+        return userDto;
+    }
+}
+```
+
+## File Naming Conventions
+
+- Commands: `{Action}{Entity}Command.cs`
+- Queries: `Get{Entity}By{Property}Query.cs`, `GetAll{Entities}Query.cs`
+- Handlers: `{Command/Query}Handler.cs`
+- DTOs: `{Entity}Dto.cs`
+
+## Usage in Controllers
+
+```csharp
+[ApiController]
+[Route("api/[controller]")]
+public class UsersController : BaseController
+{
+    [HttpPost]
+    public async Task<IActionResult> CreateUser(CreateUserCommand command)
+    {
+        await Mediator.Send(command);
+        return Ok();
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<UserDto>> GetUser(int id)
+    {
+        var query = new GetUserByIdQuery { Id = id };
+        var result = await Mediator.Send(query);
+        return Ok(result);
+    }
+}
+```
+
+## Validation
+
+- Implement appropriate validation for commands and queries
+- Use FluentValidation to separate validation logic
+- Return validation errors with appropriate HTTP status codes
+
+## Error Handling
+
+- Handle exceptions appropriately in handlers
+- Map domain exceptions to appropriate HTTP status codes
+- Provide consistent error responses through global exception handler
+
+## Asynchronous Processing
+
+- Implement all handlers asynchronously
+- Use `CancellationToken` appropriately
+- Use asynchronous methods for database operations
+
+## Testing
+
+- Write unit tests for each handler
+- Use mocks to isolate dependencies
+- Verify end-to-end behavior with integration tests

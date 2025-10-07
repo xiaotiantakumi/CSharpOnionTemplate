@@ -1,0 +1,71 @@
+---
+globs: *.cs
+description: Clean Architecture patterns and conventions
+---
+
+# Clean Architecture Rules
+
+This project follows Clean Architecture (Onion Architecture) pattern.
+
+## Layer Responsibilities
+
+### Domain Layer (Template.Domain)
+- Define business rules and entities
+- No dependencies on other layers
+- Define interfaces (repositories, services, etc.)
+- Include value objects and domain exceptions
+
+### Application Layer (Template.Application)
+- Implement use cases
+- Depends only on Domain layer
+- Contains commands, queries, handlers
+- Contains DTOs and application services
+
+### Infrastructure Layer (Template.Infrastructure)
+- Implement external concerns (database, external APIs, etc.)
+- Depends on Application and Domain layers
+- Contains repository implementations
+- Contains database context and configurations
+
+### Web Layer (Template.Web)
+- Presentation layer
+- Depends on all layers
+- Contains controllers and middleware
+- Defines API endpoints
+
+## Dependency Direction
+
+```
+Web → Application → Domain
+  ↓       ↓
+Infrastructure → Domain
+```
+
+## File Organization Rules
+
+- Entities go in `Entities/` folder
+- Value objects go in `ValueObjects/` folder
+- Interfaces go in `Interfaces/` folder
+- Commands go in `Commands/` folder
+- Queries go in `Queries/` folder
+- Handlers go in `Handlers/` folder
+- DTOs go in `DTOs/` folder
+
+## Interface Naming
+
+- Repository interfaces: `IRepository<T>`
+- Service interfaces: `I{ServiceName}Service`
+- Command handlers: `ICommandHandler<TCommand>`
+- Query handlers: `IQueryHandler<TQuery, TResult>`
+
+## Dependency Injection
+
+- Properly register interfaces and implementations
+- Set appropriate scopes (Scoped, Transient, Singleton)
+- Use constructor injection
+
+## Testing Strategy
+
+- Write appropriate tests for each layer
+- Separate unit tests, integration tests, and functional tests
+- Use mocks to isolate dependencies

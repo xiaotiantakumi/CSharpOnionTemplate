@@ -1,0 +1,298 @@
+---
+globs: *Infrastructure*/*.cs,*Data*/*.cs
+description: Entity Framework Core patterns and conventions
+---
+
+# Entity Framework Core Rules
+
+Defines conventions and best practices for Entity Framework Core usage in this project.
+
+## DbContext Design
+
+### ApplicationDbContext
+```csharp
+public class ApplicationDbContext : DbContext
+{
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) 
+        : base(options)
+    {
+    }
+    
+    public DbSet<User> Users { get; set; }
+    public DbSet<Order> Orders { get; set; }
+    
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+        base.OnModelCreating(modelBuilder);
+    }
+}
+```
+
+## Entity Configuration
+
+### Configuration Class Placement
+- Place configuration classes in `Configurations/` folder
+- File name: `{EntityName}Configuration.cs`
+- Implement `IEntityTypeConfiguration<T>`
+
+```csharp
+public class UserConfiguration : IEntityTypeConfiguration<User>
+{
+    public void Configure(EntityTypeBuilder<User> builder)
+    {
+        builder.HasKey(u => u.Id);
+        builder.Property(u => u.Name).IsRequired().HasMaxLength(100);
+        builder.Property(u => u.Email).IsRequired().HasMaxLength(255);
+        builder.HasIndex(u => u.Email).IsUnique();
+    }
+}
+```
+
+## Entity Design
+
+### Using BaseEntity
+```csharp
+public abstract class BaseEntity
+{
+    public int Id { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string CreatedBy { get; set; }
+    public string? UpdatedBy { get; set; }
+}
+```
+
+### Value Object Configuration
+```csharp
+public class Address
+{
+    public string Street { get; set; }
+    public string City { get; set; }
+    public string PostalCode { get; set; }
+}
+
+// Usage in entity
+public class User : BaseEntity
+{
+    public string Name { get; set; }
+    public Address Address { get; set; } // Value object
+}
+```
+
+## Repository Pattern
+
+### Generic Repository
+```csharp
+public interface IRepository<T> where T : BaseEntity
+{
+    Task<T?> GetByIdAsync(int id);
+    Task<IEnumerable<T>> GetAllAsync();
+    Task<T> AddAsync(T entity);
+    Task UpdateAsync(T entity);
+    Task DeleteAsync(int id);
+    Task<bool> ExistsAsync(int id);
+}
+```
+
+### Repository Implementation
+```csharp
+public class Repository<T> : IRepository<T> where T : BaseEntity
+{
+    protected readonly ApplicationDbContext _context;
+    protected readonly DbSet<T> _dbSet;
+    
+    public Repository(ApplicationDbContext context)
+    {
+        _context = context;
+        _dbSet = context.Set<T>();
+    }
+    
+    public async Task<T?> GetByIdAsync(int id)
+    {
+        return await _dbSet.FindAsync(id);
+    }
+    
+    public async Task<IEnumerable<T>> GetAllAsync()
+    {
+        return await _dbSet.ToListAsync();
+    }
+    
+    public async Task<T> AddAsync(T entity)
+    {
+        await _dbSet.AddAsync(entity);
+        await _context.SaveChangesAsync();
+        return entity;
+    }
+}
+```
+
+## Asynchronous Operations
+
+### Using Async Methods
+```csharp
+// Correct usage
+public async Task<User?> GetUserByIdAsync(int id)
+{
+    return await _context.Users
+        .FirstOrDefaultAsync(u => u.Id == id);
+}
+
+// Avoid this
+public User? GetUserById(int id)
+{
+    return _context.Users
+        .FirstOrDefault(u => u.Id == id);
+}
+```
+
+### Using CancellationToken
+```csharp
+public async Task<User?> GetUserByIdAsync(int id, CancellationToken cancellationToken = default)
+{
+    return await _context.Users
+        .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+}
+```
+
+## Query Optimization
+
+### Using Include
+```csharp
+public async Task<User?> GetUserWithOrdersAsync(int id)
+{
+    return await _context.Users
+        .Include(u => u.Orders)
+        .FirstOrDefaultAsync(u => u.Id == id);
+}
+```
+
+### Using Select
+```csharp
+public async Task<UserDto?> GetUserDtoByIdAsync(int id)
+{
+    return await _context.Users
+        .Where(u => u.Id == id)
+        .Select(u => new UserDto
+        {
+            Id = u.Id,
+            Name = u.Name,
+            Email = u.Email
+        })
+        .FirstOrDefaultAsync();
+}
+```
+
+### Pagination
+```csharp
+public async Task<PagedResult<User>> GetUsersPagedAsync(int page, int pageSize)
+{
+    var query = _context.Users.AsQueryable();
+    
+    var totalCount = await query.CountAsync();
+    var items = await query
+        .Skip((page - 1) * pageSize)
+        .Take(pageSize)
+        .ToListAsync();
+    
+    return new PagedResult<User>
+    {
+        Items = items,
+        TotalCount = totalCount,
+        Page = page,
+        PageSize = pageSize
+    };
+}
+```
+
+## Transaction Management
+
+### Unit of Work Pattern
+```csharp
+public async Task<bool> SaveChangesAsync()
+{
+    try
+    {
+        await _context.SaveChangesAsync();
+        return true;
+    }
+    catch (DbUpdateConcurrencyException)
+    {
+        return false;
+    }
+}
+```
+
+### Explicit Transactions
+```csharp
+using var transaction = await _context.Database.BeginTransactionAsync();
+try
+{
+    // Execute multiple operations
+    await _context.SaveChangesAsync();
+    await transaction.CommitAsync();
+}
+catch
+{
+    await transaction.RollbackAsync();
+    throw;
+}
+```
+
+## Migrations
+
+### Creating Migrations
+```bash
+dotnet ef migrations add InitialCreate --project src/Template.Infrastructure --startup-project src/Template.Web
+```
+
+### Updating Database
+```bash
+dotnet ef database update --project src/Template.Infrastructure --startup-project src/Template.Web
+```
+
+## Configuration and Connection Strings
+
+### appsettings.json
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=TemplateDb;Trusted_Connection=true;MultipleActiveResultSets=true"
+  }
+}
+```
+
+### Configuration in Program.cs
+```csharp
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+```
+
+## Performance Best Practices
+
+- Use `Include` only when necessary
+- Implement pagination for large datasets
+- Set up appropriate indexes
+- Regularly review query execution plans
+- Use async operations to efficiently utilize thread pool
+
+## Usage in Tests
+
+### In-Memory Database
+```csharp
+var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+    .UseInMemoryDatabase(databaseName: "TestDb")
+    .Options;
+
+using var context = new ApplicationDbContext(options);
+```
+
+### Test Data Setup
+```csharp
+[TestInitialize]
+public async Task Setup()
+{
+    _context.Users.AddRange(TestDataFactory.CreateUsers());
+    await _context.SaveChangesAsync();
+}
+```

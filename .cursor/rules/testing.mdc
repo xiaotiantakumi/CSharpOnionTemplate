@@ -1,0 +1,199 @@
+---
+globs: *Tests/*.cs,*Test*.cs
+description: Testing conventions and best practices
+---
+
+# Testing Rules
+
+Defines the testing strategy and conventions for this project.
+
+## Test Project Structure
+
+- **Template.Domain.UnitTests**: Unit tests for Domain layer
+- **Template.Application.UnitTests**: Unit tests for Application layer
+- **Template.Infrastructure.IntegrationTests**: Integration tests for Infrastructure layer
+- **Template.Web.FunctionalTests**: Functional tests for Web layer
+
+## Test Naming Conventions
+
+### Test Method Names
+```
+{MethodName}_{Scenario}_{ExpectedResult}
+```
+
+Examples:
+- `CreateUser_WithValidData_ReturnsSuccess`
+- `GetUserById_WithInvalidId_ThrowsNotFoundException`
+- `UpdateUser_WithNullName_ThrowsValidationException`
+
+### Test Class Names
+```
+{ClassName}Tests
+```
+
+Examples:
+- `UserServiceTests`
+- `UserControllerTests`
+- `UserRepositoryTests`
+
+## Test Structure (AAA Pattern)
+
+```csharp
+[Fact]
+public void MethodName_Scenario_ExpectedResult()
+{
+    // Arrange - Prepare test data
+    var user = new User { Id = 1, Name = "Test User" };
+    var repository = new Mock<IRepository<User>>();
+    
+    // Act - Execute the method under test
+    var result = service.CreateUser(user);
+    
+    // Assert - Verify the result
+    Assert.NotNull(result);
+    Assert.Equal("Test User", result.Name);
+}
+```
+
+## Mock Usage
+
+### Using Moq Library
+```csharp
+var mockRepository = new Mock<IRepository<User>>();
+mockRepository.Setup(r => r.GetByIdAsync(1))
+    .ReturnsAsync(new User { Id = 1, Name = "Test User" });
+```
+
+### Mock Verification
+```csharp
+mockRepository.Verify(r => r.AddAsync(It.IsAny<User>()), Times.Once);
+```
+
+## Test Categories
+
+### Unit Tests
+- Test single class or method
+- Use mocks for external dependencies
+- Fast execution
+
+### Integration Tests
+- Test interaction between multiple components
+- Use real database
+- Test more realistic scenarios
+
+### Functional Tests
+- Test end-to-end behavior
+- Send actual HTTP requests
+- Test complete application stack
+
+## Test Data Management
+
+### Test Data Builder
+```csharp
+public class UserBuilder
+{
+    private User _user = new User();
+    
+    public UserBuilder WithId(int id)
+    {
+        _user.Id = id;
+        return this;
+    }
+    
+    public UserBuilder WithName(string name)
+    {
+        _user.Name = name;
+        return this;
+    }
+    
+    public User Build() => _user;
+}
+```
+
+### Test Data Factory
+```csharp
+public static class TestDataFactory
+{
+    public static User CreateValidUser() => new User
+    {
+        Id = 1,
+        Name = "Test User",
+        Email = "test@example.com"
+    };
+}
+```
+
+## Async Testing
+
+```csharp
+[Fact]
+public async Task CreateUserAsync_WithValidData_ReturnsSuccess()
+{
+    // Arrange
+    var command = new CreateUserCommand { Name = "Test User" };
+    
+    // Act
+    var result = await handler.Handle(command, CancellationToken.None);
+    
+    // Assert
+    Assert.NotNull(result);
+}
+```
+
+## Exception Testing
+
+```csharp
+[Fact]
+public void GetUserById_WithInvalidId_ThrowsNotFoundException()
+{
+    // Arrange
+    var query = new GetUserByIdQuery { Id = 999 };
+    
+    // Act & Assert
+    Assert.ThrowsAsync<UserNotFoundException>(() => 
+        handler.Handle(query, CancellationToken.None));
+}
+```
+
+## Test Fixtures
+
+```csharp
+public class UserControllerTests : IClassFixture<WebApplicationFactory<Program>>
+{
+    private readonly WebApplicationFactory<Program> _factory;
+    private readonly HttpClient _client;
+    
+    public UserControllerTests(WebApplicationFactory<Program> factory)
+    {
+        _factory = factory;
+        _client = _factory.CreateClient();
+    }
+}
+```
+
+## Test Coverage
+
+- Maintain minimum 80% code coverage
+- Aim for 100% coverage for critical business logic
+- Regularly review coverage reports
+
+## Test Execution
+
+```bash
+# Run all tests
+dotnet test
+
+# Run tests for specific project
+dotnet test tests/Template.Domain.UnitTests
+
+# Generate coverage report
+dotnet test --collect:"XPlat Code Coverage"
+```
+
+## Best Practices
+
+- Tests should be independent and runnable in isolation
+- Create test data for each test
+- Make assertions clear and specific
+- Keep test methods short with single responsibility
+- Minimize test execution time

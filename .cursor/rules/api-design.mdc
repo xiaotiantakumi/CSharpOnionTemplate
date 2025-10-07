@@ -1,0 +1,347 @@
+---
+globs: *Controllers/*.cs,*Web*/*.cs
+description: API design patterns and conventions
+---
+
+# API Design Rules
+
+Defines conventions and best practices for Web API design in this project.
+
+## Controller Design
+
+### Using BaseController
+```csharp
+[ApiController]
+[Route("api/[controller]")]
+public abstract class BaseController : ControllerBase
+{
+    protected IMediator Mediator => HttpContext.RequestServices.GetRequiredService<IMediator>();
+}
+```
+
+### Controller Implementation
+```csharp
+public class UsersController : BaseController
+{
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
+    {
+        var query = new GetAllUsersQuery();
+        var result = await Mediator.Send(query);
+        return Ok(result);
+    }
+    
+    [HttpGet("{id}")]
+    public async Task<ActionResult<UserDto>> GetUser(int id)
+    {
+        var query = new GetUserByIdQuery { Id = id };
+        var result = await Mediator.Send(query);
+        return result != null ? Ok(result) : NotFound();
+    }
+}
+```
+
+## RESTful API Design
+
+### HTTP Method Usage
+- `GET`: Retrieve resources
+- `POST`: Create resources
+- `PUT`: Complete resource update
+- `PATCH`: Partial resource update
+- `DELETE`: Delete resources
+
+### URL Design
+```
+GET    /api/users              # Get all users
+GET    /api/users/{id}         # Get specific user
+POST   /api/users              # Create user
+PUT    /api/users/{id}         # Update user
+PATCH  /api/users/{id}         # Partial update user
+DELETE /api/users/{id}         # Delete user
+```
+
+### Nested Resources
+```
+GET    /api/users/{id}/orders           # Get user's orders
+POST   /api/users/{id}/orders           # Create user's order
+GET    /api/users/{id}/orders/{orderId} # Get specific order
+```
+
+## HTTP Status Codes
+
+### Success Responses
+- `200 OK`: Success
+- `201 Created`: Resource created successfully
+- `204 No Content`: Success (no content)
+
+### Client Errors
+- `400 Bad Request`: Invalid request
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Access denied
+- `404 Not Found`: Resource not found
+- `409 Conflict`: Conflict
+- `422 Unprocessable Entity`: Validation error
+
+### Server Errors
+- `500 Internal Server Error`: Internal server error
+
+## Response Format
+
+### Success Response
+```json
+{
+  "id": 1,
+  "name": "John Doe",
+  "email": "john@example.com",
+  "createdAt": "2024-01-01T00:00:00Z"
+}
+```
+
+### Error Response
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Validation failed",
+    "details": [
+      {
+        "field": "email",
+        "message": "Email is required"
+      }
+    ]
+  }
+}
+```
+
+### Pagination
+```json
+{
+  "items": [...],
+  "totalCount": 100,
+  "page": 1,
+  "pageSize": 10,
+  "totalPages": 10
+}
+```
+
+## Validation
+
+### Model Validation
+```csharp
+public class CreateUserCommand : ICommand
+{
+    [Required]
+    [StringLength(100)]
+    public string Name { get; set; }
+    
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; }
+}
+```
+
+### Custom Validation
+```csharp
+public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
+{
+    public CreateUserCommandValidator()
+    {
+        RuleFor(x => x.Name)
+            .NotEmpty()
+            .MaximumLength(100);
+            
+        RuleFor(x => x.Email)
+            .NotEmpty()
+            .EmailAddress();
+    }
+}
+```
+
+## Error Handling
+
+### Global Exception Handler
+```csharp
+public class GlobalExceptionMiddleware
+{
+    private readonly RequestDelegate _next;
+    private readonly ILogger<GlobalExceptionMiddleware> _logger;
+    
+    public async Task InvokeAsync(HttpContext context)
+    {
+        try
+        {
+            await _next(context);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unhandled exception occurred");
+            await HandleExceptionAsync(context, ex);
+        }
+    }
+    
+    private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    {
+        context.Response.ContentType = "application/json";
+        
+        var response = exception switch
+        {
+            ValidationException => new { error = "Validation failed", details = exception.Message },
+            NotFoundException => new { error = "Resource not found" },
+            _ => new { error = "Internal server error" }
+        };
+        
+        context.Response.StatusCode = exception switch
+        {
+            ValidationException => 400,
+            NotFoundException => 404,
+            _ => 500
+        };
+        
+        await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+    }
+}
+```
+
+## API Versioning
+
+### Versioning Implementation
+```csharp
+[ApiController]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
+public class UsersV1Controller : BaseController
+{
+    // V1 implementation
+}
+
+[ApiController]
+[ApiVersion("2.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
+public class UsersV2Controller : BaseController
+{
+    // V2 implementation
+}
+```
+
+## Authentication and Authorization
+
+### JWT Authentication
+```csharp
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = configuration["Jwt:Issuer"],
+            ValidAudience = configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(configuration["Jwt:Key"]))
+        };
+    });
+```
+
+### Authorization Implementation
+```csharp
+[Authorize]
+[HttpGet]
+public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
+{
+    // Only authenticated users can access
+}
+
+[Authorize(Roles = "Admin")]
+[HttpDelete("{id}")]
+public async Task<IActionResult> DeleteUser(int id)
+{
+    // Only Admin role users can access
+}
+```
+
+## CORS Configuration
+
+```csharp
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigins", policy =>
+    {
+        policy.WithOrigins("https://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+app.UseCors("AllowSpecificOrigins");
+```
+
+## Swagger/OpenAPI
+
+### Swagger Configuration
+```csharp
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo 
+    { 
+        Title = "Template API", 
+        Version = "v1" 
+    });
+    
+    // Enable XML comments
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
+});
+```
+
+### XML Comments
+```csharp
+/// <summary>
+/// Gets user information
+/// </summary>
+/// <param name="id">User ID</param>
+/// <returns>User information</returns>
+/// <response code="200">User information retrieved successfully</response>
+/// <response code="404">User not found</response>
+[HttpGet("{id}")]
+[ProducesResponseType(typeof(UserDto), 200)]
+[ProducesResponseType(404)]
+public async Task<ActionResult<UserDto>> GetUser(int id)
+{
+    // Implementation
+}
+```
+
+## Performance Optimization
+
+### Asynchronous Processing
+```csharp
+[HttpGet]
+public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
+{
+    var query = new GetAllUsersQuery();
+    var result = await Mediator.Send(query);
+    return Ok(result);
+}
+```
+
+### Caching Usage
+```csharp
+[HttpGet("{id}")]
+[ResponseCache(Duration = 300)] // Cache for 5 minutes
+public async Task<ActionResult<UserDto>> GetUser(int id)
+{
+    // Implementation
+}
+```
+
+### Compression Enablement
+```csharp
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<GzipCompressionProvider>();
+});
+```
