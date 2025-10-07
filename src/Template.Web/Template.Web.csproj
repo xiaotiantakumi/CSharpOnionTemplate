@@ -10,6 +10,8 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -17,5 +19,17 @@
     <ProjectReference Include="..\Template.Application\Template.Application.csproj" />
     <ProjectReference Include="..\Template.Infrastructure\Template.Infrastructure.csproj" />
   </ItemGroup>
+
+  <!-- Kill processes on port 5000 before build (cross-platform) -->
+  <Target Name="KillPort5000BeforeBuild" BeforeTargets="Build">
+    <Exec Command="lsof -ti:5000 | xargs kill -9 2>/dev/null || true" 
+          Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'True' OR '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'True'"
+          ContinueOnError="true" 
+          IgnoreExitCode="true" />
+    <Exec Command="for /f &quot;tokens=5&quot; %a in ('netstat -aon ^| findstr :5000') do taskkill /f /pid %a 2>nul || echo No process found on port 5000" 
+          Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'True'"
+          ContinueOnError="true" 
+          IgnoreExitCode="true" />
+  </Target>
 
 </Project>
