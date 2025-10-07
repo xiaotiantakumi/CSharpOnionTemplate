@@ -33,7 +33,7 @@ Template.sln
 ### Prerequisites
 
 - .NET 8 SDK
-- SQL Server (LocalDB or full instance)
+- SQLite (default) or SQL Server (LocalDB or full instance)
 - Visual Studio 2022 or VS Code
 
 ### Installation
@@ -138,19 +138,122 @@ Generate code coverage reports:
 
 The coverage report will be generated in the `coverage-report/` directory. Open `coverage-report/index.html` in your browser to view the detailed coverage report.
 
+## Health Endpoints
+
+The application includes comprehensive health check endpoints for monitoring and observability:
+
+### Available Endpoints
+
+- **`GET /api/health`** - Comprehensive health check
+  - Returns detailed status of all health checks
+  - Includes database connectivity and application status
+  - HTTP Status: 200 (Healthy/Degraded), 503 (Unhealthy)
+
+- **`GET /api/health/live`** - Liveness probe
+  - Simple check to verify the application is running
+  - Always returns 200 OK when the application is alive
+  - Used by container orchestrators for liveness checks
+
+- **`GET /api/health/ready`** - Readiness probe
+  - Checks if the application is ready to accept requests
+  - Depends on database connectivity and other critical services
+  - HTTP Status: 200 (Ready), 503 (Not Ready)
+
+### Health Check Response Format
+
+```json
+{
+  "status": "Healthy|Degraded|Unhealthy",
+  "totalDuration": "00:00:00.4192601",
+  "checks": [
+    {
+      "name": "database",
+      "status": "Healthy|Degraded|Unhealthy",
+      "duration": "00:00:00.2674663",
+      "description": "Optional description",
+      "exception": "Exception message if any"
+    }
+  ]
+}
+```
+
+### Usage Examples
+
+```bash
+# Check overall health
+curl http://localhost:5000/api/health
+
+# Check if application is alive
+curl http://localhost:5000/api/health/live
+
+# Check if application is ready
+curl http://localhost:5000/api/health/ready
+```
+
 ## Dependencies
 
 ### Core Packages
 - **MediatR**: CQRS implementation
 - **FluentValidation**: Input validation
-- **Entity Framework Core**: Data access
+- **Entity Framework Core**: Data access (SQLite by default)
 - **Swagger/OpenAPI**: API documentation
+- **Health Checks**: Application health monitoring
 
 ### Testing Packages
 - **xUnit**: Testing framework
 - **FluentAssertions**: Assertion library
 - **Moq**: Mocking framework
 - **Microsoft.AspNetCore.Mvc.Testing**: Integration testing
+
+## Database Configuration
+
+### Default Setup (SQLite)
+The template is configured to use SQLite by default, which works across all platforms (Windows, macOS, Linux).
+
+**Connection String:**
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=TemplateDb_Dev.db"
+  }
+}
+```
+
+### Switching to SQL Server
+If you prefer to use SQL Server, update the following files:
+
+1. **Update Infrastructure project** (`src/Template.Infrastructure/Template.Infrastructure.csproj`):
+```xml
+<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
+```
+
+2. **Update Program.cs** (`src/Template.Web/Program.cs`):
+```csharp
+options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+```
+
+3. **Update connection string** (`src/Template.Web/appsettings.Development.json`):
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=TemplateDb_Dev;Trusted_Connection=true;MultipleActiveResultSets=true"
+  }
+}
+```
+
+### Database Migrations
+The template includes Entity Framework Core migrations. To manage the database:
+
+```bash
+# Create a new migration
+dotnet tool run dotnet-ef migrations add MigrationName --project src/Template.Infrastructure --startup-project src/Template.Web
+
+# Update the database
+dotnet tool run dotnet-ef database update --project src/Template.Infrastructure --startup-project src/Template.Web
+
+# Remove the last migration
+dotnet tool run dotnet-ef migrations remove --project src/Template.Infrastructure --startup-project src/Template.Web
+```
 
 ## Customization
 
@@ -159,7 +262,7 @@ The coverage report will be generated in the `coverage-report/` directory. Open 
 1. Create entity in `Domain/Entities/`
 2. Add DbSet to `ApplicationDbContext`
 3. Create configuration in `Infrastructure/Data/Configurations/`
-4. Add migration: `dotnet ef migrations add AddNewEntity`
+4. Add migration: `dotnet tool run dotnet-ef migrations add AddNewEntity --project src/Template.Infrastructure --startup-project src/Template.Web`
 
 ### Adding New Commands/Queries
 
