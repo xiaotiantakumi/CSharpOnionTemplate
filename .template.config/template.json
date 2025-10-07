@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json.schemastore.org/Template",
+  "author": "Your Name",
+  "classifications": [
+    "Web",
+    "API",
+    "Onion Architecture",
+    "Clean Architecture",
+    "CQRS"
+  ],
+  "identity": "CSharpOnionTemplate",
+  "name": "C# Onion Architecture Template",
+  "shortName": "onion",
+  "sourceName": "Template",
+  "preferNameDirectory": true,
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  }
+}
