@@ -41,9 +41,9 @@ public class BaseControllerTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task HealthCheck_ShouldBeAccessible()
     {
         // Act
-        var response = await _client.GetAsync("/health");
+        var response = await _client.GetAsync("/api/health");
 
         // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.ServiceUnavailable);
     }
 }
