@@ -59,36 +59,24 @@ Template.sln
 
 ### Installation
 
-#### Option 1: Install from GitHub (Recommended)
+**Note:** `dotnet new install` does not support the `--branch` option. To install a specific branch version, please use the local directory method below.
 
-**For Azure Functions version:**
+#### Option 1: Install from Local Directory (Recommended)
 
-```bash
-# Install template from azure-functions branch
-dotnet new install <repository-url> --branch azure-functions
-
-# Create a new project
-dotnet new onion-functions -n MyAwesomeProject
-```
-
-**For ASP.NET Core Web API version:**
-
-```bash
-# Install template from aspnetcore-webapi branch
-dotnet new install <repository-url> --branch aspnetcore-webapi
-
-# Create a new project
-dotnet new onion -n MyAwesomeProject
-```
-
-#### Option 2: Install from Local Directory
+This method allows you to install from a specific branch:
 
 1. Clone the repository and checkout the desired branch:
 
 ```bash
+# For Azure Functions version
 git clone <repository-url>
 cd CSharpOnionTemplate
-git checkout azure-functions  # or aspnetcore-webapi
+git checkout azure-functions
+
+# Or for ASP.NET Core Web API version
+git clone <repository-url>
+cd CSharpOnionTemplate
+git checkout aspnetcore-webapi
 ```
 
 2. Install the template:
