@@ -5,7 +5,7 @@ description: .NET Development Rules for Clean Architecture Template
 
 # .NET Development Rules
 
-You are a senior .NET backend developer and an expert in C#, ASP.NET Core, and Entity Framework Core.
+You are a senior .NET backend developer and an expert in C#, Azure Functions, and Entity Framework Core.
 
 ## Project Structure
 
@@ -14,16 +14,16 @@ This project follows Clean Architecture (Onion Architecture) pattern:
 - **Template.Domain**: Entities, value objects, domain exceptions, domain interfaces
 - **Template.Application**: Commands, queries, handlers, DTOs, application services
 - **Template.Infrastructure**: Data access, repository implementations, external services
-- **Template.Web**: ASP.NET Core Web API, controllers, middleware
+- **Template.Functions**: Azure Functions HTTP trigger functions, dependency injection setup
 
 ## Code Style and Structure
 
 - Write concise, idiomatic C# code with accurate examples
-- Follow .NET and ASP.NET Core conventions and best practices
+- Follow .NET and Azure Functions conventions and best practices
 - Use object-oriented and functional programming patterns as appropriate
 - Prefer LINQ and lambda expressions for collection operations
 - Use descriptive variable and method names (e.g., 'IsUserSignedIn', 'CalculateTotal')
-- Structure files according to .NET conventions (Controllers, Models, Services, etc.)
+- Structure files according to .NET conventions (Functions, Models, Services, etc.)
 
 ## Naming Conventions
 
@@ -35,7 +35,7 @@ This project follows Clean Architecture (Onion Architecture) pattern:
 ## C# and .NET Usage
 
 - Use C# 10+ features when appropriate (record types, pattern matching, null-coalescing assignment)
-- Leverage built-in ASP.NET Core features and middleware
+- Leverage Azure Functions isolated worker model and ASP.NET Core integration
 - Use Entity Framework Core effectively for database operations
 
 ## Syntax and Formatting
@@ -52,12 +52,12 @@ This project follows Clean Architecture (Onion Architecture) pattern:
 - Implement global exception handling middleware
 - Return appropriate HTTP status codes and consistent error responses
 
-## API Design
+## Azure Functions Design
 
 - Follow RESTful API design principles
-- Use attribute routing in controllers
-- Implement versioning for your API
-- Use action filters for cross-cutting concerns
+- Use [Function] and [HttpTrigger] attributes for HTTP endpoints
+- Implement versioning for your API using route parameters
+- Use middleware for cross-cutting concerns
 
 ## Performance Optimization
 
@@ -71,13 +71,13 @@ This project follows Clean Architecture (Onion Architecture) pattern:
 - Use Dependency Injection for loose coupling and testability
 - Implement repository pattern or use Entity Framework Core directly, depending on complexity
 - Use AutoMapper for object-to-object mapping if needed
-- Implement background tasks using IHostedService or BackgroundService
+- Implement background tasks using Azure Functions triggers (Timer, Queue, etc.)
 
 ## Testing
 
 - Write unit tests using xUnit, NUnit, or MSTest
 - Use Moq or NSubstitute for mocking dependencies
-- Implement integration tests for API endpoints
+- Implement integration tests for Azure Functions endpoints
 
 ## Security
 
@@ -88,8 +88,8 @@ This project follows Clean Architecture (Onion Architecture) pattern:
 
 ## API Documentation
 
-- Use Swagger/OpenAPI for API documentation (as per installed Swashbuckle.AspNetCore package)
-- Provide XML comments for controllers and models to enhance Swagger documentation
+- Document Azure Functions using XML comments on function methods
+- Consider using OpenAPI/Swagger integration if needed
 
 ## Clean Architecture Principles
 
@@ -97,7 +97,7 @@ This project follows Clean Architecture (Onion Architecture) pattern:
 - Domain layer does not depend on any other layer
 - Application layer depends only on Domain layer
 - Infrastructure layer depends on Application and Domain layers
-- Web layer depends on all layers
+- Functions layer depends on all layers
 
 ## MediatR Pattern
 
@@ -106,4 +106,4 @@ This project follows Clean Architecture (Onion Architecture) pattern:
 - Command handlers implement `ICommandHandler<TCommand>`
 - Query handlers implement `IQueryHandler<TQuery, TResult>`
 
-Follow the official Microsoft documentation and ASP.NET Core guides for best practices in routing, controllers, models, and other API components.
+Follow the official Microsoft documentation and Azure Functions guides for best practices in HTTP triggers, functions, models, and other serverless components.

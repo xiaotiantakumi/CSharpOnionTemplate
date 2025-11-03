@@ -2,14 +2,33 @@
 
 A clean, modern .NET 8 template implementing Onion Architecture (Clean Architecture) with CQRS pattern using MediatR.
 
+## Available Templates
+
+This repository provides two template variants, each in a separate branch:
+
+### aspnetcore-webapi Branch
+
+- **ASP.NET Core Web API** implementation
+- Traditional web application with controllers
+- Swagger/OpenAPI documentation
+- Best for: Traditional web APIs, MVC applications
+
+### azure-functions Branch (Current)
+
+- **Azure Functions v4** with Isolated Worker Model
+- Serverless HTTP trigger functions
+- ASP.NET Core integration for better performance
+- Best for: Serverless applications, event-driven architectures, Azure deployments
+
 ## Features
 
-- **Onion Architecture**: Clean separation of concerns with Domain, Application, Infrastructure, and Web layers
+- **Onion Architecture**: Clean separation of concerns with Domain, Application, Infrastructure, and Functions layers
 - **CQRS Pattern**: Command Query Responsibility Segregation using MediatR
-- **Entity Framework Core**: Data access with SQL Server support
+- **Entity Framework Core**: Data access with SQLite (default) or SQL Server support
 - **Comprehensive Testing**: Unit tests, integration tests, and functional tests
 - **Modern .NET 8**: Latest .NET features and performance improvements
-- **Swagger/OpenAPI**: Built-in API documentation
+- **Azure Functions v4**: Isolated Worker Model with .NET 8 support
+- **ASP.NET Core Integration**: Enhanced performance for HTTP triggers
 - **Dependency Injection**: Proper DI container setup
 
 ## Project Structure
@@ -20,12 +39,13 @@ Template.sln
 │   ├── Template.Domain/             # Domain layer (Core business logic)
 │   ├── Template.Application/        # Application layer (Use cases, CQRS)
 │   ├── Template.Infrastructure/     # Infrastructure layer (Persistence, external services)
-│   └── Template.Web/                # Presentation layer (API, DI composition root)
+│   └── Template.Functions/          # Presentation layer (Azure Functions, DI composition root)
+│       └── Functions/               # HTTP trigger functions
 └── tests/
     ├── Template.Domain.UnitTests/
     ├── Template.Application.UnitTests/
     ├── Template.Infrastructure.IntegrationTests/
-    └── Template.Web.FunctionalTests/
+    └── Template.Functions.FunctionalTests/
 ```
 
 ## Getting Started
@@ -33,41 +53,96 @@ Template.sln
 ### Prerequisites
 
 - .NET 8 SDK
+- Azure Functions Core Tools v4 (for local development)
 - SQLite (default) or SQL Server (LocalDB or full instance)
 - Visual Studio 2022 or VS Code
 
 ### Installation
 
-1. Install the template:
+#### Option 1: Install from GitHub (Recommended)
+
+**For Azure Functions version:**
+
 ```bash
-dotnet new install ./CSharpOnionTemplate
+# Install template from azure-functions branch
+dotnet new install <repository-url> --branch azure-functions
+
+# Create a new project
+dotnet new onion-functions -n MyAwesomeProject
 ```
 
-2. Create a new project:
+**For ASP.NET Core Web API version:**
+
 ```bash
+# Install template from aspnetcore-webapi branch
+dotnet new install <repository-url> --branch aspnetcore-webapi
+
+# Create a new project
 dotnet new onion -n MyAwesomeProject
 ```
 
-3. Navigate to the project directory:
+#### Option 2: Install from Local Directory
+
+1. Clone the repository and checkout the desired branch:
+
+```bash
+git clone <repository-url>
+cd CSharpOnionTemplate
+git checkout azure-functions  # or aspnetcore-webapi
+```
+
+2. Install the template:
+
+```bash
+dotnet new install .
+```
+
+3. Create a new project:
+
+```bash
+# For Azure Functions version
+dotnet new onion-functions -n MyAwesomeProject
+
+# For ASP.NET Core Web API version
+dotnet new onion -n MyAwesomeProject
+```
+
+4. Navigate to the project directory:
+
 ```bash
 cd MyAwesomeProject
 ```
 
-4. Restore packages:
+5. Restore packages:
+
 ```bash
 dotnet restore
 ```
 
-5. Update the connection string in `appsettings.json`:
+6. Update the connection string in `local.settings.json` (Azure Functions) or `appsettings.json` (Web API):
+
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Your connection string here"
+    "DefaultConnection": "Data Source=MyDb.db"
   }
 }
 ```
 
-6. Run the application:
+7. Run the application:
+
+**For Azure Functions:**
+
+```bash
+# Using Azure Functions Core Tools
+func start --project src/MyAwesomeProject.Functions
+
+# Or using dotnet run
+dotnet run --project src/MyAwesomeProject.Functions
+```
+
+**For ASP.NET Core Web API:**
+
 ```bash
 dotnet run --project src/MyAwesomeProject.Web
 ```
@@ -75,6 +150,16 @@ dotnet run --project src/MyAwesomeProject.Web
 ### Database Setup
 
 1. Create and run migrations:
+
+**For Azure Functions:**
+
+```bash
+dotnet ef migrations add InitialCreate --project src/MyAwesomeProject.Infrastructure --startup-project src/MyAwesomeProject.Functions
+dotnet ef database update --project src/MyAwesomeProject.Infrastructure --startup-project src/MyAwesomeProject.Functions
+```
+
+**For ASP.NET Core Web API:**
+
 ```bash
 dotnet ef migrations add InitialCreate --project src/MyAwesomeProject.Infrastructure --startup-project src/MyAwesomeProject.Web
 dotnet ef database update --project src/MyAwesomeProject.Infrastructure --startup-project src/MyAwesomeProject.Web
@@ -83,6 +168,7 @@ dotnet ef database update --project src/MyAwesomeProject.Infrastructure --startu
 ## Architecture Overview
 
 ### Domain Layer
+
 - **Entities**: Core business objects
 - **Value Objects**: Immutable objects representing concepts
 - **Interfaces**: Repository and service contracts
@@ -90,6 +176,7 @@ dotnet ef database update --project src/MyAwesomeProject.Infrastructure --startu
 - **Enums**: Domain enumerations
 
 ### Application Layer
+
 - **Commands**: Write operations using CQRS
 - **Queries**: Read operations using CQRS
 - **Handlers**: Command and query handlers
@@ -98,11 +185,20 @@ dotnet ef database update --project src/MyAwesomeProject.Infrastructure --startu
 - **Interfaces**: Application service contracts
 
 ### Infrastructure Layer
+
 - **Data**: Entity Framework DbContext and configurations
 - **Repositories**: Data access implementations
 - **Services**: External service implementations
 
-### Web Layer
+### Functions Layer (Azure Functions)
+
+- **Functions**: HTTP trigger functions with [Function] and [HttpTrigger] attributes
+- **Middleware**: Azure Functions worker middleware for cross-cutting concerns
+- **Dependency Injection**: Service registration in Program.cs
+- **Health Checks**: Integrated health check endpoints
+
+### Web Layer (ASP.NET Core Web API - aspnetcore-webapi branch)
+
 - **Controllers**: API endpoints
 - **Middleware**: Custom middleware
 - **Filters**: Action filters
@@ -117,6 +213,7 @@ The template includes comprehensive testing setup:
 - **Functional Tests**: End-to-end API tests
 
 Run all tests:
+
 ```bash
 dotnet test
 ```
@@ -145,11 +242,13 @@ The application includes comprehensive health check endpoints for monitoring and
 ### Available Endpoints
 
 - **`GET /api/health`** - Comprehensive health check
+
   - Returns detailed status of all health checks
   - Includes database connectivity and application status
   - HTTP Status: 200 (Healthy/Degraded), 503 (Unhealthy)
 
 - **`GET /api/health/live`** - Liveness probe
+
   - Simple check to verify the application is running
   - Always returns 200 OK when the application is alive
   - Used by container orchestrators for liveness checks
@@ -179,6 +278,22 @@ The application includes comprehensive health check endpoints for monitoring and
 
 ### Usage Examples
 
+**For Azure Functions:**
+By default, Azure Functions runs on port 7071 locally. Adjust the port as needed.
+
+```bash
+# Check overall health
+curl http://localhost:7071/api/health
+
+# Check if application is alive
+curl http://localhost:7071/api/health/live
+
+# Check if application is ready
+curl http://localhost:7071/api/health/ready
+```
+
+**For ASP.NET Core Web API:**
+
 ```bash
 # Check overall health
 curl http://localhost:5000/api/health
@@ -190,16 +305,32 @@ curl http://localhost:5000/api/health/live
 curl http://localhost:5000/api/health/ready
 ```
 
+## Differences Between Template Variants
+
+| Feature               | Azure Functions Branch                  | ASP.NET Core Web API Branch        |
+| --------------------- | --------------------------------------- | ---------------------------------- |
+| **Runtime**           | Azure Functions v4 (Isolated Worker)    | ASP.NET Core 8                     |
+| **Entry Point**       | HTTP trigger functions                  | Controllers                        |
+| **Deployment**        | Serverless (Azure Functions)            | Traditional web hosting            |
+| **Scaling**           | Automatic (consumption plan)            | Manual/auto-scaling                |
+| **API Documentation** | Optional (OpenAPI extensions)           | Swagger/OpenAPI built-in           |
+| **Best For**          | Event-driven, serverless workloads      | Traditional web APIs, MVC apps     |
+| **Configuration**     | `host.json`, `local.settings.json`      | `appsettings.json`                 |
+| **HTTP Model**        | Functions with ASP.NET Core integration | Controllers with full MVC features |
+
 ## Dependencies
 
 ### Core Packages
+
 - **MediatR**: CQRS implementation
 - **FluentValidation**: Input validation
 - **Entity Framework Core**: Data access (SQLite by default)
-- **Swagger/OpenAPI**: API documentation
 - **Health Checks**: Application health monitoring
+- **Microsoft.Azure.Functions.Worker**: Azure Functions isolated worker model (Functions branch only)
+- **Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore**: ASP.NET Core integration (Functions branch only)
 
 ### Testing Packages
+
 - **xUnit**: Testing framework
 - **FluentAssertions**: Assertion library
 - **Moq**: Mocking framework
@@ -208,9 +339,11 @@ curl http://localhost:5000/api/health/ready
 ## Database Configuration
 
 ### Default Setup (SQLite)
+
 The template is configured to use SQLite by default, which works across all platforms (Windows, macOS, Linux).
 
 **Connection String:**
+
 ```json
 {
   "ConnectionStrings": {
@@ -220,19 +353,46 @@ The template is configured to use SQLite by default, which works across all plat
 ```
 
 ### Switching to SQL Server
+
 If you prefer to use SQL Server, update the following files:
 
 1. **Update Infrastructure project** (`src/Template.Infrastructure/Template.Infrastructure.csproj`):
+
 ```xml
 <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
 ```
 
-2. **Update Program.cs** (`src/Template.Web/Program.cs`):
+2. **Update Program.cs**:
+
+**For Azure Functions** (`src/Template.Functions/Program.cs`):
+
+```csharp
+var connectionString = context.Configuration.GetSection("ConnectionStrings:DefaultConnection").Value
+    ?? "Data Source=TemplateDb_Dev.db";
+services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(connectionString));
+```
+
+**For ASP.NET Core Web API** (`src/Template.Web/Program.cs`):
+
 ```csharp
 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 ```
 
-3. **Update connection string** (`src/Template.Web/appsettings.Development.json`):
+3. **Update connection string**:
+
+**For Azure Functions** (`src/Template.Functions/local.settings.json`):
+
+```json
+{
+  "Values": {
+    "ConnectionStrings:DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=TemplateDb_Dev;Trusted_Connection=true;MultipleActiveResultSets=true"
+  }
+}
+```
+
+**For ASP.NET Core Web API** (`src/Template.Web/appsettings.Development.json`):
+
 ```json
 {
   "ConnectionStrings": {
@@ -242,7 +402,23 @@ options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnectio
 ```
 
 ### Database Migrations
+
 The template includes Entity Framework Core migrations. To manage the database:
+
+**For Azure Functions:**
+
+```bash
+# Create a new migration
+dotnet tool run dotnet-ef migrations add MigrationName --project src/Template.Infrastructure --startup-project src/Template.Functions
+
+# Update the database
+dotnet tool run dotnet-ef database update --project src/Template.Infrastructure --startup-project src/Template.Functions
+
+# Remove the last migration
+dotnet tool run dotnet-ef migrations remove --project src/Template.Infrastructure --startup-project src/Template.Functions
+```
+
+**For ASP.NET Core Web API:**
 
 ```bash
 # Create a new migration
@@ -262,7 +438,13 @@ dotnet tool run dotnet-ef migrations remove --project src/Template.Infrastructur
 1. Create entity in `Domain/Entities/`
 2. Add DbSet to `ApplicationDbContext`
 3. Create configuration in `Infrastructure/Data/Configurations/`
-4. Add migration: `dotnet tool run dotnet-ef migrations add AddNewEntity --project src/Template.Infrastructure --startup-project src/Template.Web`
+4. Add migration:
+
+**For Azure Functions:**
+`dotnet tool run dotnet-ef migrations add AddNewEntity --project src/Template.Infrastructure --startup-project src/Template.Functions`
+
+**For ASP.NET Core Web API:**
+`dotnet tool run dotnet-ef migrations add AddNewEntity --project src/Template.Infrastructure --startup-project src/Template.Web`
 
 ### Adding New Commands/Queries
 
@@ -274,7 +456,7 @@ dotnet tool run dotnet-ef migrations remove --project src/Template.Infrastructur
 
 1. Create interface in appropriate layer
 2. Create implementation in Infrastructure
-3. Register in `Program.cs`
+3. Register in `Program.cs` (for both Functions and Web versions)
 
 ## Contributing
 

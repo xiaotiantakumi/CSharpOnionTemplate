@@ -8,7 +8,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Template.Application", "src
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Template.Infrastructure", "src\Template.Infrastructure\Template.Infrastructure.csproj", "{C3D4E5F6-G7H8-9012-CDEF-345678901234}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Template.Web", "src\Template.Web\Template.Web.csproj", "{D4E5F6G7-H8I9-0123-DEF0-456789012345}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Template.Functions", "src\Template.Functions\Template.Functions.csproj", "{D4E5F6G7-H8I9-0123-DEF0-456789012345}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Template.Domain.UnitTests", "tests\Template.Domain.UnitTests\Template.Domain.UnitTests.csproj", "{E5F6G7H8-I9J0-1234-EF01-567890123456}"
 EndProject
@@ -16,7 +16,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Template.Application.UnitTe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Template.Infrastructure.IntegrationTests", "tests\Template.Infrastructure.IntegrationTests\Template.Infrastructure.IntegrationTests.csproj", "{G7H8I9J0-K1L2-3456-0123-789012345678}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Template.Web.FunctionalTests", "tests\Template.Web.FunctionalTests\Template.Web.FunctionalTests.csproj", "{H8I9J0K1-L2M3-4567-1234-890123456789}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Template.Functions.FunctionalTests", "tests\Template.Functions.FunctionalTests\Template.Functions.FunctionalTests.csproj", "{H8I9J0K1-L2M3-4567-1234-890123456789}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

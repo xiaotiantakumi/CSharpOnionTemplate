@@ -2,15 +2,15 @@
   "$schema": "http://json.schemastore.org/Template",
   "author": "Your Name",
   "classifications": [
-    "Web",
-    "API",
+    "Azure Functions",
+    "Serverless",
     "Onion Architecture",
     "Clean Architecture",
     "CQRS"
   ],
-  "identity": "CSharpOnionTemplate",
-  "name": "C# Onion Architecture Template",
-  "shortName": "onion",
+  "identity": "CSharpOnionTemplateFunctions",
+  "name": "C# Onion Architecture Template - Azure Functions",
+  "shortName": "onion-functions",
   "sourceName": "Template",
   "preferNameDirectory": true,
   "tags": {

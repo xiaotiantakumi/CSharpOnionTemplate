@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 using System.IO;
 using System.Text;
 
-namespace Template.Web.FunctionalTests;
+namespace Template.Functions.FunctionalTests;
 
 public static class TestUtils
 {
